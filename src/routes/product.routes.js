@@ -92,6 +92,29 @@ router.delete('/:id', protect, restrictTo('admin'), async (req, res) => {
   }
 });
 
+// ==================== APIهای مدیریت موجودی ====================
+
+// دریافت همه موجودی‌ها (فقط ادمین)
+router.get('/inventory/all', protect, restrictTo('admin'), async (req, res) => {
+  try {
+    const inventory = await Inventory.find().populate('productId', 'name');
+    res.json(inventory);
+  } catch (error) {
+    res.status(500).json({ message: 'خطا در دریافت موجودی', error: error.message });
+  }
+});
+
+// دریافت موجودی یک محصول در همه استان‌ها
+router.get('/inventory/product/:productId', protect, async (req, res) => {
+  try {
+    const { productId } = req.params;
+    const inventory = await Inventory.find({ productId });
+    res.json(inventory);
+  } catch (error) {
+    res.status(500).json({ message: 'خطا در دریافت موجودی محصول', error: error.message });
+  }
+});
+
 // بروزرسانی موجودی انبار
 router.put('/inventory/:productId', protect, async (req, res) => {
   try {
@@ -105,11 +128,32 @@ router.put('/inventory/:productId', protect, async (req, res) => {
     
     const inventory = await Inventory.findOneAndUpdate(
       { productId, province },
-      { quantity, updatedBy: req.user._id },
+      { quantity, updatedBy: req.user._id, updatedAt: new Date() },
       { upsert: true, new: true }
     );
     
     res.json(inventory);
+  } catch (error) {
+    res.status(500).json({ message: 'خطا در بروزرسانی موجودی', error: error.message });
+  }
+});
+
+// بروزرسانی همزمان موجودی برای همه استان‌ها (فقط ادمین)
+router.post('/inventory/bulk-update', protect, restrictTo('admin'), async (req, res) => {
+  try {
+    const { updates } = req.body; // [{ productId, province, quantity }]
+    
+    const results = [];
+    for (const update of updates) {
+      const inventory = await Inventory.findOneAndUpdate(
+        { productId: update.productId, province: update.province },
+        { quantity: update.quantity, updatedBy: req.user._id, updatedAt: new Date() },
+        { upsert: true, new: true }
+      );
+      results.push(inventory);
+    }
+    
+    res.json({ message: 'موجودی با موفقیت به‌روزرسانی شد', results });
   } catch (error) {
     res.status(500).json({ message: 'خطا در بروزرسانی موجودی', error: error.message });
   }
