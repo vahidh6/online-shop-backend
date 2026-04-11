@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const orderSchema = new mongoose.Schema({
   orderNumber: { type: String, unique: true },
   customerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  salesManagerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null }, // تغییر: required نباشد
+  salesManagerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
   province: { type: String, required: true },
   items: [{
     productId: { type: mongoose.Schema.Types.ObjectId, ref: 'Product', required: true },
@@ -29,6 +29,7 @@ const orderSchema = new mongoose.Schema({
     bankName: String,
     senderName: String,
     amount: Number,
+    exchangeName: String,  // ← اضافه شده برای حواله صرافی
     uploadedAt: Date,
     verifiedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     verifiedAt: Date
