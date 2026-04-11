@@ -8,14 +8,21 @@ require('dotenv').config();
 const authRoutes = require('./routes/auth.routes');
 const productRoutes = require('./routes/product.routes');
 const orderRoutes = require('./routes/orders');
+const uploadRoutes = require('./routes/upload');
 
 const app = express();
 
-// ==================== MIDDLEWARE (ترتیب مهم است!) ====================
+// ==================== MIDDLEWARE ====================
 
-// 1. CORS - اول از همه
+// 1. CORS - با آدرس Netlify
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:5000'],
+  origin: [
+    'http://localhost:3000',
+    'http://localhost:3001', 
+    'http://localhost:5000',
+    'https://advance20.netlify.app',
+    'https://online-shop-frontend.vercel.app'
+  ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
@@ -39,6 +46,7 @@ app.get('/', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/api', uploadRoutes);
 
 // ==================== ERROR HANDLER ====================
 app.use((err, req, res, next) => {
@@ -62,7 +70,4 @@ app.listen(PORT, () => {
   console.log(`📝 Products API: http://localhost:${PORT}/api/products`);
   console.log(`📝 Orders API: http://localhost:${PORT}/api/orders`);
   console.log(`\n✅ Ready for requests\n`);
-  // اضافه کنید
-const uploadRoutes = require('./routes/upload');
-app.use('/api', uploadRoutes);
 });
