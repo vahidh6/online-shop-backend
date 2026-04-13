@@ -11,6 +11,7 @@ const orderRoutes = require('./routes/orders');
 const uploadRoutes = require('./routes/upload');
 const locationRoutes = require('./routes/location.routes');
 const settingsRoutes = require('./routes/settings.routes');
+const categoryRoutes = require('./routes/category.routes');
 
 const app = express();
 
@@ -51,6 +52,8 @@ app.use('/api/orders', orderRoutes);
 app.use('/api', uploadRoutes);
 app.use('/api/locations', locationRoutes);
 app.use('/api/settings', settingsRoutes);
+app.use('/api/categories', categoryRoutes);
+
 
 // ==================== ERROR HANDLER ====================
 app.use((err, req, res, next) => {
