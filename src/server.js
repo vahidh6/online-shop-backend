@@ -12,6 +12,7 @@ const uploadRoutes = require('./routes/upload');
 const locationRoutes = require('./routes/location.routes');
 const settingsRoutes = require('./routes/settings.routes');
 const categoryRoutes = require('./routes/category.routes');
+const bannerRoutes = require('./routes/banner.routes');
 
 const app = express();
 
@@ -53,6 +54,7 @@ app.use('/api', uploadRoutes);
 app.use('/api/locations', locationRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/categories', categoryRoutes);
+app.use('/api/banners', bannerRoutes);
 
 
 // ==================== ERROR HANDLER ====================
