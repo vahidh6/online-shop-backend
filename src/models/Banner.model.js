@@ -16,7 +16,8 @@ const bannerSchema = new mongoose.Schema({
   },
   image: { 
     type: String, 
-    required: true 
+    required: false,      // ← true رو改成 false
+    default: 'https://via.placeholder.com/1200x400?text=No+Image'  // ← اضافه کن
   },
   imageMobile: { 
     type: String 
