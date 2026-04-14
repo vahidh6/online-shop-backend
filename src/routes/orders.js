@@ -3,6 +3,7 @@ const router = express.Router();
 const Order = require('../models/Order.model');
 const Inventory = require('../models/Inventory.model');
 const { protect } = require('../middleware/auth.middleware');
+const { sendOrderConfirmationNotifications, sendOrderStatusUpdateNotifications } = require('../controllers/notification.controller');
 
 // دریافت سفارشات بر اساس نقش
 router.get('/', protect, async (req, res) => {
@@ -105,8 +106,11 @@ router.post('/', protect, async (req, res) => {
       totalAmount: subtotal + deliveryFee
     });
     
-    await order.populate('customerId', 'name phone');
+    await order.populate('customerId', 'name phone email');
     await order.populate('salesManagerId', 'name phone');
+    
+    // ارسال نوتیفیکیشن تأیید سفارش
+    sendOrderConfirmationNotifications(order, order.customerId).catch(err => console.error('Notification error:', err));
     
     res.status(201).json(order);
   } catch (err) {
@@ -178,10 +182,15 @@ router.put('/:id/verify-payment', protect, async (req, res) => {
       }
     }
     
+    const oldStatus = order.status;
     order.status = 'payment_verified';
     order.paymentReceipt.verifiedBy = req.user._id;
     order.paymentReceipt.verifiedAt = new Date();
     await order.save();
+    
+    // ارسال نوتیفیکیشن تغییر وضعیت
+    await order.populate('customerId', 'name email phone');
+    sendOrderStatusUpdateNotifications(order, order.customerId, oldStatus, 'payment_verified').catch(err => console.error('Notification error:', err));
     
     res.json({ message: 'پرداخت با موفقیت تایید شد', order });
   } catch (err) {
@@ -225,9 +234,14 @@ router.put('/:id/status', protect, async (req, res) => {
       });
     }
     
+    const oldStatus = order.status;
     order.status = status;
     if (trackingCode) order.trackingCode = trackingCode;
     await order.save();
+    
+    // ارسال نوتیفیکیشن تغییر وضعیت
+    await order.populate('customerId', 'name email phone');
+    sendOrderStatusUpdateNotifications(order, order.customerId, oldStatus, status).catch(err => console.error('Notification error:', err));
     
     res.json(order);
   } catch (err) {

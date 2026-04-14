@@ -1,6 +1,7 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User.model');
+const { sendWelcomeNotifications } = require('../controllers/notification.controller');
 const { protect } = require('../middleware/auth.middleware');
 
 const router = express.Router();
@@ -29,6 +30,9 @@ router.post('/register', async (req, res) => {
       address,
       role: role || 'customer'
     });
+    
+    // ارسال نوتیفیکیشن خوش‌آمدگویی
+    sendWelcomeNotifications(user).catch(err => console.error('Notification error:', err));
     
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
       expiresIn: '30d'
@@ -62,7 +66,7 @@ router.post('/login', async (req, res) => {
       $or: [
         { email: email || '' },
         { phone: phone || '' },
-        { phone: email || '' }  // اگر کاربر شماره را در فیلد ایمیل وارد کرده باشد
+        { phone: email || '' }
       ]
     });
     
