@@ -13,6 +13,7 @@ const locationRoutes = require('./routes/location.routes');
 const settingsRoutes = require('./routes/settings.routes');
 const categoryRoutes = require('./routes/category.routes');
 const bannerRoutes = require('./routes/banner.routes');
+const userRoutes = require('./routes/user.routes');
 
 const app = express();
 
@@ -55,6 +56,7 @@ app.use('/api/locations', locationRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/banners', bannerRoutes);
+app.use('/api/users', userRoutes);
 
 
 // ==================== ERROR HANDLER ====================
