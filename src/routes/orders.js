@@ -53,7 +53,7 @@ router.get('/:id', protect, async (req, res) => {
   }
 });
 
-// ایجاد سفارش جدید (بدون بررسی موجودی)
+// ایجاد سفارش جدید (بدون بررسی موجودی - با وضعیت متفاوت برای پرداخت نقدی)
 router.post('/', protect, async (req, res) => {
   try {
     if (req.user.role !== 'customer') {
@@ -64,13 +64,20 @@ router.post('/', protect, async (req, res) => {
     const subtotal = req.body.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     const deliveryFee = req.user.province === 'کابل' ? 50000 : 100000;
     
+    // تعیین وضعیت اولیه بر اساس روش پرداخت
+    let initialStatus = 'pending_payment';
+    if (req.body.paymentMethod === 'cash_on_delivery') {
+      initialStatus = 'processing';  // پرداخت نقدی هنگام تحویل - نیازی به آپلود رسید ندارد
+    }
+    
     const order = await Order.create({
       ...req.body,
       customerId: req.user._id,
       province: req.user.province,
       subtotal,
       deliveryFee,
-      totalAmount: subtotal + deliveryFee
+      totalAmount: subtotal + deliveryFee,
+      status: initialStatus
     });
     
     await order.populate('customerId', 'name phone email');
@@ -152,7 +159,7 @@ router.put('/:id/verify-payment', protect, async (req, res) => {
   }
 });
 
-// بروزرسانی وضعیت سفارش
+// بروزرسانی وضعیت سفارش (قوانین ساده شده)
 router.put('/:id/status', protect, async (req, res) => {
   try {
     const { status, trackingCode } = req.body;
@@ -171,12 +178,12 @@ router.put('/:id/status', protect, async (req, res) => {
       return res.status(403).json({ message: 'دسترسی غیرمجاز' });
     }
     
-    // اعتبارسنجی تغییر وضعیت
+    // قوانین ساده شده تغییر وضعیت - اجازه تغییر مستقیم
     const validTransitions = {
-      'pending_payment': ['payment_uploaded', 'cancelled'],
-      'payment_uploaded': ['payment_verified', 'cancelled'],
-      'payment_verified': ['processing', 'cancelled'],
-      'processing': ['shipped', 'cancelled'],
+      'pending_payment': ['payment_uploaded', 'payment_verified', 'processing', 'shipped', 'delivered', 'cancelled'],
+      'payment_uploaded': ['payment_verified', 'processing', 'shipped', 'delivered', 'cancelled'],
+      'payment_verified': ['processing', 'shipped', 'delivered', 'cancelled'],
+      'processing': ['shipped', 'delivered', 'cancelled'],
       'shipped': ['delivered', 'cancelled'],
       'delivered': [],
       'cancelled': []
