@@ -53,44 +53,11 @@ router.get('/:id', protect, async (req, res) => {
   }
 });
 
-// ایجاد سفارش جدید
+// ایجاد سفارش جدید (بدون بررسی موجودی)
 router.post('/', protect, async (req, res) => {
   try {
     if (req.user.role !== 'customer') {
       return res.status(403).json({ message: 'فقط مشتریان می‌توانند سفارش ثبت کنند' });
-    }
-    
-    // بررسی موجودی
-    for (const item of req.body.items) {
-      const inventory = await Inventory.findOne({
-        productId: item.productId,
-        province: req.user.province
-      });
-      
-      if (!inventory) {
-        return res.status(400).json({ 
-          message: `محصول ${item.productName} در استان ${req.user.province} موجود نیست`
-        });
-      }
-      
-      const available = inventory.quantity - (inventory.reservedQuantity || 0);
-      if (available < item.quantity) {
-        return res.status(400).json({ 
-          message: `موجودی محصول ${item.productName} در استان ${req.user.province} کافی نیست`,
-          available,
-          requested: item.quantity
-        });
-      }
-    }
-    
-    // رزرو موجودی
-    for (const item of req.body.items) {
-      const inventory = await Inventory.findOne({
-        productId: item.productId,
-        province: req.user.province
-      });
-      inventory.reservedQuantity = (inventory.reservedQuantity || 0) + item.quantity;
-      await inventory.save();
     }
     
     // محاسبه مبالغ
@@ -148,7 +115,7 @@ router.post('/:id/upload-payment', protect, async (req, res) => {
   }
 });
 
-// تایید پرداخت (ادمین یا مدیر فروش)
+// تایید پرداخت (ادمین یا مدیر فروش) - بدون کاهش موجودی
 router.put('/:id/verify-payment', protect, async (req, res) => {
   try {
     const order = await Order.findById(req.params.id);
@@ -167,19 +134,6 @@ router.put('/:id/verify-payment', protect, async (req, res) => {
     
     if (order.status !== 'payment_uploaded') {
       return res.status(400).json({ message: 'این سفارش در وضعیت قابل تایید پرداخت نیست' });
-    }
-    
-    // کاهش موجودی واقعی
-    for (const item of order.items) {
-      const inventory = await Inventory.findOne({
-        productId: item.productId,
-        province: order.province
-      });
-      if (inventory) {
-        inventory.quantity -= item.quantity;
-        inventory.reservedQuantity -= item.quantity;
-        await inventory.save();
-      }
     }
     
     const oldStatus = order.status;
