@@ -26,7 +26,8 @@ app.use(cors({
     'http://localhost:3001', 
     'http://localhost:5000',
     'https://advance20.netlify.app',
-    'https://online-shop-frontend.vercel.app'
+    'https://online-shop-frontend.vercel.app',
+    'https://jawid-fizi.netlify.app' 
   ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
